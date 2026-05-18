@@ -11,8 +11,8 @@ BRIGHTNESS_PERCENT = 100
 
 # Access Point settings.
 AP_ENABLED = True
-AP_SSID = "FlatCap"
-AP_PASSWORD = "pie12345"
+AP_SSID = ""
+AP_PASSWORD = ""
 
 # Physical strip layout in 3D space.
 # These ranges are fixed wiring truth and should rarely change.
