@@ -10,7 +10,7 @@ This repo runs patterns on 80 WS2812 LEDs, split into three fixed physical strip
 
 Current default pattern is comet, with one moving head per strip.
 
-## What is in here
+## Repo
 
 - device/: board runtime and patterns (this is what you upload)
 - docs/: board and workflow notes
