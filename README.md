@@ -36,7 +36,3 @@ If you are sharing hardware in public, change this password.
 - comet
 - green_cycle
 - ten_segment_colors
-
-## Notes
-
-This is a learning and experimentation project, so the code is intentionally simple.
