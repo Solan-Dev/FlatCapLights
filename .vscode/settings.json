@@ -1,0 +1,20 @@
+{
+    "python.languageServer": "Pylance",
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportMissingModuleSource": "none"
+    },
+    "python.terminal.activateEnvironment": false,
+    "micropico.autoConnect": true,
+    "micropico.openOnStart": false,
+    "micropico.syncFolder": "device",
+    "micropico.gcBeforeUpload": true,
+    "micropico.softResetAfterUpload": true,
+    "python.analysis.typeshedPaths": [
+        "~/.micropico-stubs/included"
+    ],
+    "python.analysis.extraPaths": [
+        "~/.micropico-stubs/included",
+        "./stubs"
+    ]
+}

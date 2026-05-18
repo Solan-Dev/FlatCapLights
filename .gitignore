@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# MicroPico local state
+.micropico/
+
+# Local board credentials
+secrets.py
+device/secrets.py
+
+# VS Code local state
+.vscode/*.code-workspace
