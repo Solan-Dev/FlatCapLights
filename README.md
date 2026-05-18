@@ -27,10 +27,7 @@ Current default pattern is comet, with one moving head per strip.
 
 ## Wi-Fi AP mode
 
-AP startup is enabled in device/config.py.
-
-- SSID: FlatCap
-- Password: pie12345
+AP startup is enabled in device/config.py
 
 If you are sharing hardware in public, change this password.
 
