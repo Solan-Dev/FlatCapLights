@@ -15,9 +15,9 @@ This repository is a teaching workspace for the Plasma 2350 W board.
 
 - Board: Plasma 2350 W
 - Firmware: Pimoroni Plasma MicroPython image with `import plasma`
-- LEDs: 80 total
+- LEDs: 100 total, arranged as four 25-LED segments
 - Physical layout model: `STRIP_DEFS` (`start`, `length`, `reversed`) is canonical
-- Strip names: `base`, `top_left`, `top_right`
+- Strip names: `segment_1`, `segment_2`, `segment_3`, `segment_4`
 - Default pattern: `comet`
 - AP mode: enabled (`FlatCap`)
 - Frame rate: 60 FPS

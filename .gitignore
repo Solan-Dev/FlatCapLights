@@ -6,6 +6,9 @@ __pycache__/
 # MicroPico local state
 .micropico/
 
+# Downloaded board firmware
+.firmware/
+
 # Local board credentials
 secrets.py
 device/secrets.py

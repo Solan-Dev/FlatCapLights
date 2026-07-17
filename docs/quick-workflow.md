@@ -13,17 +13,29 @@ This project is set up to be edited and uploaded in `device/` only.
 
 - Board: Plasma 2350 W
 - Firmware: Pimoroni Plasma MicroPython build with `import plasma`
-- LEDs: 100 total
-- Default pattern: one green LED cycles from 0 to 99
+- LEDs: 100 total, arranged as four 25-LED segments
+- Default pattern: comet
 - Frame rate: 60 FPS
 
 ## Daily Loop
 
 1. Make sure `MicroPico vREPL` is disconnected before uploading.
-2. Edit `device/main.py` or `device/config.py`.
-3. Use MicroPico to upload the `device/` folder or the changed file.
-4. Reconnect vREPL only when you want to test or inspect the board.
-5. Press `Ctrl+D` in vREPL for a soft reset after changes.
+2. Edit files in `device/`.
+3. Upload the complete runtime from the repository root:
+
+	```powershell
+	python scripts/upload_device.py
+	```
+
+	The uploader uses `COM5` by default. If Windows assigns another port, run:
+
+	```powershell
+	python scripts/upload_device.py --port COM7
+	```
+
+4. The uploader removes stale matching `.mpy` files, uploads the source, then
+	soft-resets the board so the updated pattern starts automatically.
+5. Reconnect vREPL only when you want to inspect the board.
 
 ## What Goes Where
 
@@ -32,13 +44,25 @@ This project is set up to be edited and uploaded in `device/` only.
 - Put each pattern in its own file under `device/patterns/`.
 - Register pattern names in `device/patterns/__init__.py`.
 - Keep board-facing code small and easy to upload.
+- `scripts/upload_device.py` uploads every runtime `.py` file in `device/` and
+	excludes `secrets.example.py`. A real `device/secrets.py`, when present, is
+	uploaded.
+
+## Button A
+
+- A short Button A press selects the next pattern in `PATTERN_SEQUENCE`.
+- Hold Button A for one second to toggle the LEDs on or off.
+- Change the pattern order or hold duration in `device/config.py`.
+- Do not use the BOOT button for normal controls; it is needed for firmware
+	flashing.
 
 ## If Upload Fails
 
-- Check whether `MicroPico vREPL` is still open.
+- Check whether MicroPico vREPL or another serial tool still has the COM port
+	open.
 - Confirm the board is visible on the expected COM port.
+- Run `python scripts/upload_device.py --port COMx` with the detected port.
 - Verify the Plasma firmware is installed, not a generic MicroPython build.
-- If needed, reconnect the board and try again after closing all serial sessions.
 
 ## Current Teaching Goal
 

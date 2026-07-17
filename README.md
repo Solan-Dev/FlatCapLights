@@ -1,12 +1,12 @@
 # FlatCapLights
 
-A fun Plasma 2350 W LED project for a hat build.
+This repo runs patterns on 100 WS2812 LEDs, split into four fixed physical
+segments of 25 LEDs:
 
-This repo runs patterns on 80 WS2812 LEDs, split into three fixed physical strips:
-
-- base (0-29)
-- top_left (30-54)
-- top_right (55-79)
+- segment_1 (0-24)
+- segment_2 (25-49)
+- segment_3 (50-74)
+- segment_4 (75-99)
 
 Current default pattern is comet, with one moving head per strip.
 
@@ -27,9 +27,18 @@ Current default pattern is comet, with one moving head per strip.
 
 ## Wi-Fi AP mode
 
-AP startup is enabled in device/config.py
+AP startup is enabled in device/config.py.
 
-If you are sharing hardware in public, change this password.
+Create a local credentials file at device/secrets.py (not committed):
+
+```python
+AP_SSID = "FlatCap"
+AP_PASSWORD = "pie12345"
+```
+
+There is a template at device/secrets.example.py.
+
+If you are sharing hardware in public, change the default password.
 
 ## Pattern list
 
