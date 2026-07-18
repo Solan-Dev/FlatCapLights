@@ -1,8 +1,8 @@
 import time
 
 
-LEFT_STRIPS = ("segment_1", "segment_3")
-RIGHT_STRIPS = ("segment_2", "segment_4")
+LEFT_STRIPS = ("segment_1", "segment_2")
+RIGHT_STRIPS = ("segment_3", "segment_4")
 
 
 def fill_strip(ctx, strip_name, color):
