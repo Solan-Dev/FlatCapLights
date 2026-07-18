@@ -5,7 +5,7 @@ with the configured physical segments and the existing global brightness
 control.
 
 1. **Rainbow sweep** - A continuous rainbow moves along the full installation. Implemented as `rainbow_sweep`.
-2. **Breathing color** - One chosen color slowly brightens and dims. Implemented as `breathing_color`; its hue also changes over time.
+2. **Breathing color** - Each physical segment gently brightens and dims on its own phase. Implemented as `breathing_color`; its hue also changes over time.
 3. **Meteor shower** - Random comets appear, cross a segment, and fade out. Implemented as `meteor_shower`.
 4. **Twinkle field** - Independent, soft white or colored sparkles fade in and out. Implemented as `twinkle_field`.
 5. **Fire** - Orange, red, and yellow flicker rises from each segment start.

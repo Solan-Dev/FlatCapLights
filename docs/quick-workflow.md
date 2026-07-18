@@ -13,7 +13,7 @@ This project is set up to be edited and uploaded in `device/` only.
 
 - Board: Plasma 2350 W
 - Firmware: Pimoroni Plasma MicroPython build with `import plasma`
-- LEDs: 100 total, arranged as four 25-LED segments
+- LEDs: 70 total, arranged as four segments of 17, 18, 18, and 17 LEDs
 - Default pattern: comet
 - Frame rate: 60 FPS
 

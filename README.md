@@ -1,12 +1,12 @@
 # FlatCapLights
 
-This repo runs patterns on 100 WS2812 LEDs, split into four fixed physical
-segments of 25 LEDs:
+This repo runs patterns on 70 WS2812 LEDs, split into four fixed physical
+segments:
 
-- segment_1 (0-24)
-- segment_2 (25-49)
-- segment_3 (50-74)
-- segment_4 (75-99)
+- segment_1 (0-16, 17 LEDs)
+- segment_2 (17-34, 18 LEDs)
+- segment_3 (35-52, 18 LEDs)
+- segment_4 (53-69, 17 LEDs)
 
 Current default pattern is comet, with one moving head per strip.
 

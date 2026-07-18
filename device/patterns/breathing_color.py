@@ -4,8 +4,11 @@ from .common import scaled_hsv
 
 
 def render(ctx, elapsed, _state, brightness):
-    """Breathe a color that drifts smoothly around the color wheel."""
-    level = 0.12 + 0.88 * ((math.sin(elapsed * 1.7) + 1.0) / 2.0)
-    color = scaled_hsv(elapsed * 0.025, 0.85, level, brightness)
-    for index in range(int(ctx["led_count"])):
-        ctx["set_pixel"](index, *color)
+    """Breathe each physical segment independently with a drifting color."""
+    for strip_number, strip_name in enumerate(ctx["strip_defs"]):
+        phase = elapsed * 1.2 + strip_number * 1.57
+        level = 0.12 + 0.88 * ((math.sin(phase) + 1.0) / 2.0)
+        color = scaled_hsv(elapsed * 0.025 + strip_number * 0.17, 0.85, level, brightness)
+        strip_length = int(ctx["strip_defs"][strip_name]["length"])
+        for local_index in range(strip_length):
+            ctx["set_strip_pixel"](strip_name, local_index, *color)

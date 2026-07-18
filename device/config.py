@@ -1,5 +1,5 @@
 # Total number of physical LEDs on the strips.
-LED_COUNT = 100
+LED_COUNT = 70
 # Byte order expected by the LED strips (common values: RGB, GRB).
 COLOR_ORDER = "GRB"
 # Refresh rate used by the plasma driver.
@@ -43,9 +43,9 @@ AP_PASSWORD = getattr(_secrets, "AP_PASSWORD", None)
 # Physical strip layout in 3D space.
 # These ranges are fixed wiring truth and should rarely change.
 STRIP_DEFS = {
-	"segment_1": {"start": 0, "length": 25, "reversed": True},
-	"segment_2": {"start": 25, "length": 25, "reversed": True},
-	"segment_3": {"start": 50, "length": 25, "reversed": True},
-	"segment_4": {"start": 75, "length": 25, "reversed": True},
+	"segment_1": {"start": 0, "length": 17, "reversed": True},
+	"segment_2": {"start": 17, "length": 18, "reversed": True},
+	"segment_3": {"start": 35, "length": 18, "reversed": True},
+	"segment_4": {"start": 53, "length": 17, "reversed": True},
 }
 

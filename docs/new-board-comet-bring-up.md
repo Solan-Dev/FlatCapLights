@@ -1,7 +1,7 @@
 # New Plasma 2350 W: Firmware and Comet Bring-Up
 
 This procedure prepares a new Pimoroni Plasma 2350 W to run this project's
-100-LED `comet` pattern. Complete the steps in order and stop at the validation
+70-LED `comet` pattern. Complete the steps in order and stop at the validation
 checks before moving on.
 
 ## Result
@@ -11,8 +11,7 @@ At the end of this procedure, the board will:
 - run the Pimoroni Plasma 2350 W MicroPython firmware;
 - have this repository's `device/` files installed;
 - start the `comet` pattern automatically after power-up; and
-- retain the four-segment layout: `segment_1`, `segment_2`, `segment_3`, and
-   `segment_4`, with 25 LEDs in each segment.
+- retain the four-segment layout: 17 LEDs, 18 LEDs, 18 LEDs, and 17 LEDs.
 
 ## What You Need
 
@@ -21,7 +20,7 @@ At the end of this procedure, the board will:
   strip ground to board ground, and the LED data wire to the Plasma LED data
   connection. All powered parts must share ground.
 - A suitable power supply for the installed LED strip. Do not assume USB alone
-  can safely power 80 LEDs at full white brightness.
+   can safely power 70 LEDs at full white brightness.
 - VS Code with the MicroPico extension configured for this workspace.
 - This repository open in VS Code.
 
@@ -29,11 +28,11 @@ At the end of this procedure, the board will:
 
 1. Keep the existing physical wiring arrangement unless the new installation
    is intentionally different.
-2. Confirm there are 100 WS2812-compatible LEDs in the four physical runs:
-   - `segment_1`: indices 0-24
-   - `segment_2`: indices 25-49
-   - `segment_3`: indices 50-74
-   - `segment_4`: indices 75-99
+2. Confirm there are 70 WS2812-compatible LEDs in the four physical runs:
+   - `segment_1`: indices 0-16 (17 LEDs)
+   - `segment_2`: indices 17-34 (18 LEDs)
+   - `segment_3`: indices 35-52 (18 LEDs)
+   - `segment_4`: indices 53-69 (17 LEDs)
 3. Do not power the LEDs from multiple supplies unless their grounds are tied
    together and the power arrangement has been checked first.
 
@@ -105,7 +104,7 @@ unambiguous.
 Keep these existing settings unless the physical installation differs:
 
 ```python
-LED_COUNT = 100
+LED_COUNT = 70
 COLOR_ORDER = "GRB"
 FPS = 60
 ```
@@ -145,7 +144,7 @@ the real credentials out of source control.
    four physical segments.
 2. The four heads advance independently around their own segments. Each head
    changes colour when it wraps to the strip start.
-3. Check all 100 LEDs light eventually.
+3. Check all 70 LEDs light eventually.
 4. All four segments are initially configured in forward direction. Set a
    segment's `reversed` value to `True` in `STRIP_DEFS` only if its physical
    direction needs to be reversed.
