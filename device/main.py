@@ -5,7 +5,7 @@ import plasma
 from pimoroni import Button
 import config
 from heartlight.ble_manager import HeartRateBleManager
-from heartlight.renderer import render_searching
+from heartlight.renderer import render as render_heart_rate
 from heartlight.state import HeartRateState
 from patterns import PATTERNS
 from segment_mapper import validate_strip_defs, strip_local_to_global
@@ -175,7 +175,7 @@ async def run():
 
         try:
             if selected_mode == heart_rate_mode:
-                render_searching(pattern_context, elapsed, brightness)
+                render_heart_rate(pattern_context, elapsed, heart_state, brightness)
             else:
                 requested_pattern = runtime_state.get("pattern", config.DEFAULT_PATTERN)
                 if requested_pattern == "sequencer" and sequence_patterns:

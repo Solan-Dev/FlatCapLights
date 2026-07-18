@@ -1,9 +1,13 @@
 import asyncio
 import bluetooth
 import aioble
+import time
+
+from .heart_rate import decode_measurement
 
 
 HEART_RATE_SERVICE = bluetooth.UUID(0x180D)
+HEART_RATE_MEASUREMENT = bluetooth.UUID(0x2A37)
 RUNNING_SPEED_CADENCE_SERVICE = bluetooth.UUID(0x1814)
 
 
@@ -65,8 +69,56 @@ class HeartRateBleManager:
     async def discovery_loop(self):
         self.running = True
         while self.running:
-            await self.scan_once()
+            candidate = await self.scan_once()
+            if candidate:
+                await self.connect_and_monitor(candidate)
             await asyncio.sleep_ms(1000)
 
     def stop(self):
         self.running = False
+
+    async def connect_and_monitor(self, result):
+        connection = None
+        try:
+            self.log("connecting to", self.state.candidate_name)
+            connection = await result.device.connect(timeout_ms=8000)
+            async with connection:
+                self.log("connected; discovering heart-rate characteristic")
+                service = await connection.service(HEART_RATE_SERVICE, timeout_ms=5000)
+                measurement = await service.characteristic(
+                    HEART_RATE_MEASUREMENT,
+                    timeout_ms=5000,
+                )
+                await measurement.subscribe(notify=True)
+                self.log("subscribed; waiting for heart-rate measurement")
+
+                while self.running and connection.is_connected():
+                    try:
+                        data = await measurement.notified(timeout_ms=5000)
+                        bpm, rr_intervals = decode_measurement(data)
+                    except asyncio.TimeoutError:
+                        continue
+                    except ValueError as exc:
+                        self.state.decode_error_count += 1
+                        self.log("invalid measurement", exc)
+                        continue
+
+                    now_ms = time.ticks_ms()
+                    if not self.state.connected:
+                        self.state.connected = True
+                        self.state.connected_at_ms = now_ms
+                        self.log("valid measurement; connected")
+                    self.state.update_measurement(bpm, rr_intervals, now_ms)
+                    self.log("heart rate", bpm, "BPM")
+        except asyncio.TimeoutError:
+            self.log("connection or discovery timeout")
+        except Exception as exc:
+            self.log("connection failed", exc)
+        finally:
+            self.state.reset_connection()
+            if connection:
+                try:
+                    await connection.disconnect()
+                except Exception:
+                    pass
+            self.log("disconnected")
