@@ -65,7 +65,9 @@ def render(ctx, elapsed, state, brightness):
     period_ms = max(1, state.beat_period_ms)
     beat_age = time.ticks_diff(now_ms, state.beat_anchor_ms) % period_ms
     phase = beat_age / period_ms
-    pulse = max(0.0, 1.0 - phase / 0.18)
+    primary_pulse = max(0.0, 1.0 - phase / 0.16)
+    secondary_pulse = 0.38 * max(0.0, 1.0 - abs(phase - 0.34) / 0.09)
+    pulse = max(primary_pulse, secondary_pulse)
     level = 0.18 + 0.82 * pulse
     if elapsed % UNICORN_CYCLE_SECONDS < UNICORN_DURATION_SECONDS:
         render_unicorn(ctx, elapsed, level, brightness)
