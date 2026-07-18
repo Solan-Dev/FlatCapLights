@@ -1,5 +1,10 @@
-import math
 import time
+
+from patterns.common import scaled_hsv
+
+
+UNICORN_CYCLE_SECONDS = 20
+UNICORN_DURATION_SECONDS = 4
 
 
 def render_searching(ctx, elapsed, brightness):
@@ -19,6 +24,27 @@ def render_searching(ctx, elapsed, brightness):
 def fill(ctx, red, green, blue):
     for index in range(int(ctx["led_count"])):
         ctx["set_pixel"](index, red, green, blue)
+
+
+def render_segment_rainbow(ctx, elapsed, level, brightness):
+    for strip_number, strip_name in enumerate(ctx["strip_defs"]):
+        hue = elapsed * 0.045 + strip_number / 4.0
+        color = scaled_hsv(hue, 0.9, level, brightness)
+        strip_length = int(ctx["strip_defs"][strip_name]["length"])
+        for local_index in range(strip_length):
+            ctx["set_strip_pixel"](strip_name, local_index, *color)
+
+
+def render_unicorn(ctx, elapsed, level, brightness):
+    visual_index = 0
+    led_count = max(1, int(ctx["led_count"]))
+    for strip_name in ctx["strip_defs"]:
+        strip_length = int(ctx["strip_defs"][strip_name]["length"])
+        for local_index in range(strip_length):
+            hue = elapsed * 0.09 + visual_index / led_count
+            color = scaled_hsv(hue, 0.95, level, brightness)
+            ctx["set_strip_pixel"](strip_name, local_index, *color)
+            visual_index += 1
 
 
 def render(ctx, elapsed, state, brightness):
@@ -41,9 +67,7 @@ def render(ctx, elapsed, state, brightness):
     phase = beat_age / period_ms
     pulse = max(0.0, 1.0 - phase / 0.18)
     level = 0.18 + 0.82 * pulse
-    fill(
-        ctx,
-        int(255 * level * brightness),
-        int(54 * level * brightness),
-        0,
-    )
+    if elapsed % UNICORN_CYCLE_SECONDS < UNICORN_DURATION_SECONDS:
+        render_unicorn(ctx, elapsed, level, brightness)
+    else:
+        render_segment_rainbow(ctx, elapsed, level, brightness)
