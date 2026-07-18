@@ -25,6 +25,11 @@ PATTERN_SEQUENCE = (
 )
 PATTERN_DWELL_SECONDS = 6
 
+# Special operating modes selected alongside visual patterns.
+HEART_RATE_MODE = "heart_rate"
+MODE_SEQUENCE = ("comet", HEART_RATE_MODE) + PATTERN_SEQUENCE[1:]
+BLE_DIAGNOSTICS = True
+
 # Button A controls.
 # A short press selects the next pattern; holding it toggles LEDs on or off.
 BUTTON_A_ENABLED = True

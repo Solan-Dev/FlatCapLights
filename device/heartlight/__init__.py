@@ -1,0 +1,1 @@
+"""BLE heart-rate mode support for HatLights."""

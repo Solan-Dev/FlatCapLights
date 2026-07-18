@@ -1,8 +1,12 @@
+import asyncio
 import time
 import network
 import plasma
 from pimoroni import Button
 import config
+from heartlight.ble_manager import HeartRateBleManager
+from heartlight.renderer import render_searching
+from heartlight.state import HeartRateState
 from patterns import PATTERNS
 from segment_mapper import validate_strip_defs, strip_local_to_global
 
@@ -69,6 +73,7 @@ pattern_context = {
 }
 
 runtime_state = {
+    "mode": config.DEFAULT_PATTERN,
     "pattern": config.DEFAULT_PATTERN,
     "brightness_percent": config.BRIGHTNESS_PERCENT,
     "led_enabled": True,
@@ -80,6 +85,11 @@ sequence_patterns = [
     if name in PATTERNS and name != "sequencer"
 ]
 sequence_dwell = max(1, int(getattr(config, "PATTERN_DWELL_SECONDS", 6)))
+heart_rate_mode = getattr(config, "HEART_RATE_MODE", "heart_rate")
+mode_sequence = [
+    name for name in getattr(config, "MODE_SEQUENCE", sequence_patterns)
+    if name in PATTERNS or name == heart_rate_mode
+]
 
 button_a = None
 if getattr(config, "BUTTON_A_ENABLED", True):
@@ -89,55 +99,97 @@ button_a_pressed_at = 0
 button_a_long_press_ms = max(1, int(getattr(config, "BUTTON_A_LONG_PRESS_MS", 1000)))
 
 
-def select_next_pattern():
-    if not sequence_patterns:
+def select_next_mode():
+    if not mode_sequence:
         return
 
-    current_pattern = runtime_state.get("pattern", config.DEFAULT_PATTERN)
+    current_mode = runtime_state.get("mode", config.DEFAULT_PATTERN)
     try:
-        current_index = sequence_patterns.index(current_pattern)
+        current_index = mode_sequence.index(current_mode)
     except ValueError:
         current_index = -1
-    runtime_state["pattern"] = sequence_patterns[(current_index + 1) % len(sequence_patterns)]
+    next_mode = mode_sequence[(current_index + 1) % len(mode_sequence)]
+    runtime_state["mode"] = next_mode
+    if next_mode in PATTERNS:
+        runtime_state["pattern"] = next_mode
 
-start_ticks = time.ticks_ms()
+heart_state = HeartRateState()
+ble_manager = HeartRateBleManager(
+    heart_state,
+    diagnostics=getattr(config, "BLE_DIAGNOSTICS", False),
+)
+active_mode = None
+ble_task = None
 
-# Run loop
-while True:
-    elapsed_ms = time.ticks_diff(time.ticks_ms(), start_ticks)
-    elapsed = elapsed_ms / 1000.0
 
-    if button_a:
-        button_a_is_pressed = button_a.read()
-        if button_a_is_pressed and not button_a_was_pressed:
-            button_a_pressed_at = time.ticks_ms()
-        elif not button_a_is_pressed and button_a_was_pressed:
-            press_duration = time.ticks_diff(time.ticks_ms(), button_a_pressed_at)
-            if press_duration >= button_a_long_press_ms:
-                runtime_state["led_enabled"] = not runtime_state["led_enabled"]
+async def set_active_mode(next_mode):
+    global active_mode, ble_task
+    if next_mode == active_mode:
+        return
+
+    if ble_task:
+        ble_manager.stop()
+        ble_task.cancel()
+        try:
+            await ble_task
+        except asyncio.CancelledError:
+            pass
+        ble_task = None
+        heart_state.reset_connection()
+
+    if ap:
+        ap.active(next_mode != heart_rate_mode)
+
+    if next_mode == heart_rate_mode:
+        ble_task = asyncio.create_task(ble_manager.discovery_loop())
+
+    active_mode = next_mode
+
+
+async def run():
+    global button_a_was_pressed, button_a_pressed_at
+    start_ticks = time.ticks_ms()
+
+    while True:
+        elapsed_ms = time.ticks_diff(time.ticks_ms(), start_ticks)
+        elapsed = elapsed_ms / 1000.0
+
+        if button_a:
+            button_a_is_pressed = button_a.read()
+            if button_a_is_pressed and not button_a_was_pressed:
+                button_a_pressed_at = time.ticks_ms()
+            elif not button_a_is_pressed and button_a_was_pressed:
+                press_duration = time.ticks_diff(time.ticks_ms(), button_a_pressed_at)
+                if press_duration >= button_a_long_press_ms:
+                    runtime_state["led_enabled"] = not runtime_state["led_enabled"]
+                else:
+                    select_next_mode()
+            button_a_was_pressed = button_a_is_pressed
+
+        selected_mode = runtime_state.get("mode", config.DEFAULT_PATTERN)
+        await set_active_mode(selected_mode)
+
+        brightness = clamp(runtime_state["brightness_percent"], 0, 100) / 100.0
+        if not runtime_state["led_enabled"]:
+            brightness = 0.0
+
+        try:
+            if selected_mode == heart_rate_mode:
+                render_searching(pattern_context, elapsed, brightness)
             else:
-                select_next_pattern()
-        button_a_was_pressed = button_a_is_pressed
+                requested_pattern = runtime_state.get("pattern", config.DEFAULT_PATTERN)
+                if requested_pattern == "sequencer" and sequence_patterns:
+                    sequence_index = int(elapsed // sequence_dwell) % len(sequence_patterns)
+                    active_pattern = sequence_patterns[sequence_index]
+                else:
+                    active_pattern = requested_pattern
+                resolve_pattern(active_pattern)(pattern_context, elapsed, runtime_state, brightness)
+            runtime_state["last_error"] = None
+        except Exception as exc:
+            runtime_state["last_error"] = str(exc)
+            clear_strip()
 
-    brightness = clamp(runtime_state["brightness_percent"], 0, 100) / 100.0
-    if not runtime_state["led_enabled"]:
-        brightness = 0.0
+        await asyncio.sleep_ms(max(1, int(1000 / max(1, config.FPS))))
 
-    requested_pattern = runtime_state.get("pattern", config.DEFAULT_PATTERN)
-    if requested_pattern == "sequencer" and sequence_patterns:
-        sequence_index = int(elapsed // sequence_dwell) % len(sequence_patterns)
-        active_pattern = sequence_patterns[sequence_index]
-    else:
-        active_pattern = requested_pattern
 
-    try:
-        render_pattern = resolve_pattern(active_pattern)
-        render_pattern(pattern_context, elapsed, runtime_state, brightness)
-        runtime_state["last_error"] = None
-    except Exception as exc:
-        # Keep the board alive and visible even if one pattern fails.
-        runtime_state["last_error"] = str(exc)
-        runtime_state["pattern"] = "green_cycle"
-        clear_strip()
-
-    time.sleep(1.0 / max(1, config.FPS))
+asyncio.run(run())
