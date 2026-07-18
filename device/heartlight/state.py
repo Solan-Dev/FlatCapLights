@@ -14,6 +14,14 @@ class HeartRateState:
         self.beat_anchor_ms = None
         self.beat_period_ms = None
         self.period_samples_ms = []
+        self.cadence_spm = None
+        self.speed_mps = None
+        self.stride_length_m = None
+        self.total_distance_m = None
+        self.last_cadence_update_ms = None
+        self.step_anchor_ms = None
+        self.cadence_packet_count = 0
+        self.cadence_decode_error_count = 0
 
     def reset_connection(self):
         self.connected = False
@@ -24,6 +32,12 @@ class HeartRateState:
         self.beat_anchor_ms = None
         self.beat_period_ms = None
         self.period_samples_ms = []
+        self.cadence_spm = None
+        self.speed_mps = None
+        self.stride_length_m = None
+        self.total_distance_m = None
+        self.last_cadence_update_ms = None
+        self.step_anchor_ms = None
 
     def update_measurement(self, bpm, rr_intervals, now_ms):
         self.bpm = bpm
@@ -42,3 +56,20 @@ class HeartRateState:
 
         if self.beat_anchor_ms is None:
             self.beat_anchor_ms = now_ms
+
+    def update_cadence(
+        self,
+        cadence_spm,
+        speed_mps,
+        stride_length_m,
+        total_distance_m,
+        now_ms,
+    ):
+        self.cadence_spm = cadence_spm
+        self.speed_mps = speed_mps
+        self.stride_length_m = stride_length_m
+        self.total_distance_m = total_distance_m
+        self.last_cadence_update_ms = now_ms
+        self.cadence_packet_count += 1
+        if self.step_anchor_ms is None:
+            self.step_anchor_ms = now_ms

@@ -27,7 +27,8 @@ PATTERN_DWELL_SECONDS = 6
 
 # Special operating modes selected alongside visual patterns.
 HEART_RATE_MODE = "heart_rate"
-MODE_SEQUENCE = ("comet", HEART_RATE_MODE) + PATTERN_SEQUENCE[1:]
+CADENCE_MODE = "cadence"
+MODE_SEQUENCE = ("comet", HEART_RATE_MODE, CADENCE_MODE) + PATTERN_SEQUENCE[1:]
 BLE_DIAGNOSTICS = True
 HEART_RATE_PERIOD_WINDOW = 5
 

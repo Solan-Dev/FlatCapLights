@@ -4,11 +4,13 @@ import aioble
 import time
 
 from .heart_rate import decode_measurement
+from .running_speed_cadence import decode_measurement as decode_rsc_measurement
 
 
 HEART_RATE_SERVICE = bluetooth.UUID(0x180D)
 HEART_RATE_MEASUREMENT = bluetooth.UUID(0x2A37)
 RUNNING_SPEED_CADENCE_SERVICE = bluetooth.UUID(0x1814)
+RUNNING_SPEED_CADENCE_MEASUREMENT = bluetooth.UUID(0x2A53)
 
 
 class HeartRateBleManager:
@@ -77,8 +79,52 @@ class HeartRateBleManager:
     def stop(self):
         self.running = False
 
+    async def monitor_heart_rate(self, measurement):
+        while self.running:
+            try:
+                data = await measurement.notified(timeout_ms=5000)
+                bpm, rr_intervals = decode_measurement(data)
+            except asyncio.TimeoutError:
+                continue
+            except ValueError as exc:
+                self.state.decode_error_count += 1
+                self.log("invalid measurement", exc)
+                continue
+
+            now_ms = time.ticks_ms()
+            if not self.state.connected:
+                self.state.connected = True
+                self.state.connected_at_ms = now_ms
+                self.log("valid measurement; connected")
+            self.state.update_measurement(bpm, rr_intervals, now_ms)
+            self.log("heart rate", bpm, "BPM")
+
+    async def monitor_cadence(self, measurement):
+        while self.running:
+            try:
+                data = await measurement.notified(timeout_ms=5000)
+                cadence_spm, speed_mps, stride_length_m, total_distance_m = (
+                    decode_rsc_measurement(data)
+                )
+            except asyncio.TimeoutError:
+                continue
+            except ValueError as exc:
+                self.state.cadence_decode_error_count += 1
+                self.log("invalid cadence measurement", exc)
+                continue
+
+            self.state.update_cadence(
+                cadence_spm,
+                speed_mps,
+                stride_length_m,
+                total_distance_m,
+                time.ticks_ms(),
+            )
+            self.log("cadence", cadence_spm, "steps/min")
+
     async def connect_and_monitor(self, result):
         connection = None
+        notification_tasks = []
         try:
             self.log("connecting to", self.state.candidate_name)
             connection = await result.device.connect(timeout_ms=8000)
@@ -90,31 +136,44 @@ class HeartRateBleManager:
                     timeout_ms=5000,
                 )
                 await measurement.subscribe(notify=True)
+                notification_tasks.append(
+                    asyncio.create_task(self.monitor_heart_rate(measurement))
+                )
                 self.log("subscribed; waiting for heart-rate measurement")
 
-                while self.running and connection.is_connected():
-                    try:
-                        data = await measurement.notified(timeout_ms=5000)
-                        bpm, rr_intervals = decode_measurement(data)
-                    except asyncio.TimeoutError:
-                        continue
-                    except ValueError as exc:
-                        self.state.decode_error_count += 1
-                        self.log("invalid measurement", exc)
-                        continue
+                try:
+                    rsc_service = await connection.service(
+                        RUNNING_SPEED_CADENCE_SERVICE,
+                        timeout_ms=5000,
+                    )
+                    cadence_measurement = await rsc_service.characteristic(
+                        RUNNING_SPEED_CADENCE_MEASUREMENT,
+                        timeout_ms=5000,
+                    )
+                    await cadence_measurement.subscribe(notify=True)
+                    notification_tasks.append(
+                        asyncio.create_task(
+                            self.monitor_cadence(cadence_measurement)
+                        )
+                    )
+                    self.log("subscribed; waiting for cadence measurement")
+                except Exception as exc:
+                    self.log("cadence unavailable", exc)
 
-                    now_ms = time.ticks_ms()
-                    if not self.state.connected:
-                        self.state.connected = True
-                        self.state.connected_at_ms = now_ms
-                        self.log("valid measurement; connected")
-                    self.state.update_measurement(bpm, rr_intervals, now_ms)
-                    self.log("heart rate", bpm, "BPM")
+                while self.running and connection.is_connected():
+                    await asyncio.sleep_ms(250)
         except asyncio.TimeoutError:
             self.log("connection or discovery timeout")
         except Exception as exc:
             self.log("connection failed", exc)
         finally:
+            for notification_task in notification_tasks:
+                notification_task.cancel()
+            for notification_task in notification_tasks:
+                try:
+                    await notification_task
+                except asyncio.CancelledError:
+                    pass
             self.state.reset_connection()
             if connection:
                 try:

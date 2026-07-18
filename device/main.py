@@ -5,6 +5,7 @@ import plasma
 from pimoroni import Button
 import config
 from heartlight.ble_manager import HeartRateBleManager
+from heartlight.cadence_renderer import render as render_cadence
 from heartlight.renderer import render as render_heart_rate
 from heartlight.state import HeartRateState
 from patterns import PATTERNS
@@ -86,9 +87,11 @@ sequence_patterns = [
 ]
 sequence_dwell = max(1, int(getattr(config, "PATTERN_DWELL_SECONDS", 6)))
 heart_rate_mode = getattr(config, "HEART_RATE_MODE", "heart_rate")
+cadence_mode = getattr(config, "CADENCE_MODE", "cadence")
+ble_modes = (heart_rate_mode, cadence_mode)
 mode_sequence = [
     name for name in getattr(config, "MODE_SEQUENCE", sequence_patterns)
-    if name in PATTERNS or name == heart_rate_mode
+    if name in PATTERNS or name in ble_modes
 ]
 
 button_a = None
@@ -129,7 +132,7 @@ async def set_active_mode(next_mode):
     if next_mode == active_mode:
         return
 
-    if ble_task:
+    if ble_task and next_mode not in ble_modes:
         ble_manager.stop()
         ble_task.cancel()
         try:
@@ -140,9 +143,9 @@ async def set_active_mode(next_mode):
         heart_state.reset_connection()
 
     if ap:
-        ap.active(next_mode != heart_rate_mode)
+        ap.active(next_mode not in ble_modes)
 
-    if next_mode == heart_rate_mode:
+    if next_mode in ble_modes and not ble_task:
         ble_task = asyncio.create_task(ble_manager.discovery_loop())
 
     active_mode = next_mode
@@ -178,6 +181,8 @@ async def run():
         try:
             if selected_mode == heart_rate_mode:
                 render_heart_rate(pattern_context, elapsed, heart_state, brightness)
+            elif selected_mode == cadence_mode:
+                render_cadence(pattern_context, elapsed, heart_state, brightness)
             else:
                 requested_pattern = runtime_state.get("pattern", config.DEFAULT_PATTERN)
                 if requested_pattern == "sequencer" and sequence_patterns:
