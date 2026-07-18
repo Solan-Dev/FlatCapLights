@@ -113,7 +113,9 @@ def select_next_mode():
     if next_mode in PATTERNS:
         runtime_state["pattern"] = next_mode
 
-heart_state = HeartRateState()
+heart_state = HeartRateState(
+    period_window=getattr(config, "HEART_RATE_PERIOD_WINDOW", 5),
+)
 ble_manager = HeartRateBleManager(
     heart_state,
     diagnostics=getattr(config, "BLE_DIAGNOSTICS", False),
